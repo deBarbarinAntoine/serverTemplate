@@ -2,6 +2,9 @@
 <nav>
     <a href="/">Index</a>
     <a href="/login">Login</a>
-    <form action="/logout" method="post"><input type="submit" value="Logout" /></form>
+    <form action="/logout" method="post">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+        <button>Logout</button>
+    </form>
 </nav>
 {{end}}

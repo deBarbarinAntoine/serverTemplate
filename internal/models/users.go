@@ -17,6 +17,7 @@ func (m *UserModel) Exists(id int) (bool, error) {
 
 func (m *UserModel) Authenticate(email, password string) (int, error) {
 
+	// TODO authentication with email and password
 	if email == "thorgdar@gmail.com" {
 		return 1, nil
 	}

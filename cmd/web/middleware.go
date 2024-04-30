@@ -72,8 +72,6 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		id := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
 
 		if id == 0 {
-			// debug
-			app.logger.Debug("authenticated user not found", slog.String("user_id", fmt.Sprint(id)))
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -87,10 +85,6 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 		if exists {
 			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
 			r = r.WithContext(ctx)
-			// debug
-			app.logger.DebugContext(r.Context(), "debugging sessionManager", slog.Any("contextAuthenticatedUserId ", r.Context().Value("authenticatedUserId")), slog.Any("context", r.Context()))
-		} else { // debug
-			app.logger.Debug("user doesn't exist!", slog.Any("id", id))
 		}
 
 		next.ServeHTTP(w, r)

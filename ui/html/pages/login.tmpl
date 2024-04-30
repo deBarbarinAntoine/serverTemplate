@@ -1,7 +1,6 @@
 {{define "title"}}Login{{end}}
 
 {{define "page"}}
-
     <form action='/login' method='post' novalidate>
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         {{range .Form.NonFieldErrors}}

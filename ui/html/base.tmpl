@@ -13,6 +13,9 @@
     {{end}}
 </header>
 <main>
+
+    {{with .Flash}}<div class="flash-msg">{{.}}</div>{{end}}
+
     {{template "page" .}}
 </main>
 <footer>

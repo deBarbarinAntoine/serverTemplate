@@ -2,10 +2,12 @@ package main
 
 import (
 	"crypto/tls"
+	"database/sql"
 	"flag"
+	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/v2"
-	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/go-playground/form/v4"
+	_ "github.com/go-sql-driver/mysql"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,11 +19,20 @@ func main() {
 	addr := flag.String("addr", ":4000", "HTTP service address")
 
 	// if you want to enable a MySQL database (mainly for the sessions management)
-	// dsn := flag.String("dsn", "web:pass@/serverTemplate?parseTime=true", "MySQL DSN (data source name)")
+	dsn := flag.String("dsn", "sT_Manager:$er!/3rT3mpI4t3@/serverTemplate?parseTime=true", "MySQL DSN (data source name)")
 
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	// if you want a MySQL database linked to your web server (mainly for the sessions management)
+	db, err := openDB(*dsn)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	defer db.Close()
 
 	templateCache, err := newTemplateCache()
 	if err != nil {
@@ -31,22 +42,11 @@ func main() {
 
 	formDecoder := form.NewDecoder()
 
-	// if you want a MySQL database linked to your web server (mainly for the sessions management)
-	// db, err := openDB(*dsn)
-	// if err != nil {
-	// 	logger.Error(err.Error())
-	// 	os.Exit(1)
-	// }
-	// defer db.Close()
-
 	sessionManager := scs.New()
+	// if you want to store the sessionIDs in a MySQL database, with db being the database pool
+	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 24 * time.Hour
 	sessionManager.Cookie.Secure = true
-	sessionManager.Cookie.SameSite = http.SameSiteLaxMode
-	sessionManager.Store = memstore.New()
-
-	// if you want to store the sessionIDs in a MySQL database, with db being the database pool
-	// sessionManager.Store = mysqlstore.New(db)
 
 	app := &application{
 		logger:         logger,
@@ -83,4 +83,20 @@ func main() {
 	err = server.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	logger.Error(err.Error())
 	os.Exit(1)
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
 }

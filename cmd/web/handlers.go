@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 	"serverTemplate/internal/models"
 	"serverTemplate/internal/validator"
@@ -12,6 +11,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Message = "Welcome to my website!"
+
+	app.sessionManager.Put(r.Context(), "flash", "Welcome home!")
 
 	app.render(w, r, http.StatusOK, "home.tmpl", data)
 }
@@ -70,9 +71,7 @@ func (app *application) loginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.sessionManager.Put(r.Context(), "authenticatedUserId", id)
-	// debug
-	app.logger.DebugContext(r.Context(), "debugging sessionManager", slog.Any("contextAuthenticatedUserId ", r.Context().Value("authenticatedUserId")), slog.Int("userId", id))
+	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
 	http.Redirect(w, r, "/protected", http.StatusSeeOther)
 }
@@ -92,7 +91,5 @@ func (app *application) logoutPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) restrictedSomething(w http.ResponseWriter, r *http.Request) {
-	// debug
-	app.logger.Debug("restrictedSomething")
 	w.Write([]byte("Welcome to the restricted page!"))
 }
